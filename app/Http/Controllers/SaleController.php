@@ -111,17 +111,106 @@ class SaleController extends Controller
 
     public function edit(Sale $sale)
     {
-        return redirect()->route('sales.show', $sale);
+        if ($sale->status === 'paid') {
+            return redirect()->route('sales.show', $sale)
+                ->with('error', 'Paid sales cannot be edited.');
+        }
+
+        $customers = Customer::orderBy('name')->get();
+        $products  = Product::orderBy('name')->get();
+        $sale->load('items.product');
+        return view('sales.edit', compact('sale', 'customers', 'products'));
     }
 
     public function update(Request $request, Sale $sale)
     {
-        return redirect()->route('sales.show', $sale);
+        if ($sale->status === 'paid') {
+            return redirect()->route('sales.show', $sale)
+                ->with('error', 'Paid sales cannot be edited.');
+        }
+
+        $request->validate([
+            'customer_id'          => 'required|exists:customers,id',
+            'sale_date'            => 'required|date',
+            'payment_type'         => 'required',
+            'items'                => 'required|array|min:1',
+            'items.*.product_id'   => 'required|exists:products,id',
+            'items.*.qty'          => 'required|integer|min:1',
+            'items.*.unit_price'   => 'required|numeric|min:0',
+        ]);
+
+        DB::transaction(function () use ($request, $sale) {
+            foreach ($sale->items as $old_item) {
+                Product::find($old_item->product_id)?->increment('stock_qty', $old_item->qty);
+            }
+
+            if ($sale->due_amount > 0) {
+                Customer::find($sale->customer_id)?->decrement('balance', $sale->due_amount);
+            }
+
+            $sale->items()->delete();
+
+            $total      = 0;
+            $items_data = [];
+
+            foreach ($request->items as $item) {
+                $product    = Product::findOrFail($item['product_id']);
+                $line_total = $item['qty'] * $item['unit_price'];
+                $total     += $line_total;
+
+                $items_data[] = [
+                    'product_id'     => $item['product_id'],
+                    'qty'            => $item['qty'],
+                    'unit_price'     => $item['unit_price'],
+                    'purchase_price' => $product->purchase_price,
+                    'total_price'    => $line_total,
+                ];
+
+                $product->decrement('stock_qty', $item['qty']);
+            }
+
+            $discount   = $request->discount ?? 0;
+            $net_amount = $total - $discount;
+            $paid       = $sale->paid_amount;
+            $due        = $net_amount - $paid;
+
+            $sale->update([
+                'customer_id'  => $request->customer_id,
+                'total_amount' => $total,
+                'discount'     => $discount,
+                'net_amount'   => $net_amount,
+                'due_amount'   => $due,
+                'payment_type' => $request->payment_type,
+                'status'       => $due <= 0 ? 'paid' : ($paid > 0 ? 'partial' : 'unpaid'),
+                'sale_date'    => $request->sale_date,
+                'notes'        => $request->notes,
+            ]);
+
+            $sale->items()->createMany($items_data);
+
+            if ($due > 0) {
+                Customer::find($request->customer_id)?->increment('balance', $due);
+            }
+        });
+
+        return redirect()->route('sales.show', $sale)
+            ->with('success', 'Sale updated successfully!');
     }
 
     public function destroy(Sale $sale)
     {
-        $sale->delete();
+        DB::transaction(function () use ($sale) {
+            foreach ($sale->items as $item) {
+                Product::find($item->product_id)?->increment('stock_qty', $item->qty);
+            }
+            if ($sale->due_amount > 0) {
+                Customer::find($sale->customer_id)?->decrement('balance', $sale->due_amount);
+            }
+            $sale->items()->delete();
+            $sale->recoveries()->delete();
+            $sale->delete();
+        });
+
         return redirect()->route('sales.index')->with('success', 'Sale deleted!');
     }
 

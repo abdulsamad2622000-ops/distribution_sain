@@ -8,15 +8,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .sidebar {
+       .sidebar {
             width: 250px;
-            min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(180deg, #0d1b2a 0%, #1b2838 50%, #0d1b2a 100%);
             position: fixed;
             top: 0; left: 0;
             z-index: 1050;
-            overflow-y: auto;
+            overflow-y: scroll;
+            overflow-x: hidden;
             transition: transform 0.3s ease;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,180,216,0.3) transparent;
         }
         .sidebar .brand { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .sidebar .brand h4 { color: #00b4d8; font-weight: 700; margin: 0; font-size: 16px; }
@@ -127,7 +130,13 @@
         <a href="{{ route('recoveries.index') }}" class="nav-link {{ request()->routeIs('recoveries.*') ? 'active' : '' }}">
             <i class="bi bi-cash-coin"></i> Recovery
         </a>
-
+<div class="nav-section">Purchase</div>
+<a href="{{ route('purchase-orders.index') }}" class="nav-link {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
+    <i class="bi bi-cart-plus"></i> Purchase Orders
+</a>
+<a href="{{ route('grns.index') }}" class="nav-link {{ request()->routeIs('grns.*') ? 'active' : '' }}">
+    <i class="bi bi-box-arrow-in-down"></i> Goods Received
+</a>
         <div class="nav-section">Inventory</div>
         <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
             <i class="bi bi-box-seam"></i> Products
@@ -135,7 +144,35 @@
         <a href="{{ route('suppliers.index') }}" class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
             <i class="bi bi-truck"></i> Suppliers
         </a>
-
+        <a href="{{ route('warehouses.index') }}" class="nav-link {{ request()->routeIs('warehouses.*') ? 'active' : '' }}">
+    <i class="bi bi-building"></i> Warehouses
+</a>
+<div class="nav-section">Accounting</div>
+        <a href="{{ route('accounts.index') }}" class="nav-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}">
+            <i class="bi bi-journal-bookmarks"></i> Chart of Accounts
+        </a>
+       <a href="{{ route('journal-entries.index') }}" class="nav-link {{ request()->routeIs('journal-entries.*') ? 'active' : '' }}">
+            <i class="bi bi-journal-text"></i> Journal Entries
+        </a>
+        <a href="{{ route('accounts.trial-balance') }}" class="nav-link {{ request()->routeIs('accounts.trial-balance') ? 'active' : '' }}">
+            <i class="bi bi-journal-check"></i> Trial Balance
+        </a>
+        <a href="{{ route('accounts.balance-sheet') }}" class="nav-link {{ request()->routeIs('accounts.balance-sheet') ? 'active' : '' }}">
+            <i class="bi bi-file-earmark-bar-graph"></i> Balance Sheet
+        </a>
+        <a href="{{ route('accounts.income-statement') }}" class="nav-link {{ request()->routeIs('accounts.income-statement') ? 'active' : '' }}">
+            <i class="bi bi-graph-up-arrow"></i> Income Statement
+        </a>
+        <div class="nav-section">HR & Payroll</div>
+        <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+            <i class="bi bi-people-fill"></i> Employees
+        </a>
+        <a href="{{ route('salaries.index') }}" class="nav-link {{ request()->routeIs('salaries.*') ? 'active' : '' }}">
+            <i class="bi bi-cash-stack"></i> Salaries
+        </a>
+        <a href="{{ route('attendance.index') }}" class="nav-link {{ request()->routeIs('attendance.*') ? 'active' : '' }}">
+            <i class="bi bi-calendar-check"></i> Attendance
+        </a>
         <div class="nav-section">Parties</div>
         <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
             <i class="bi bi-people"></i> Customers
@@ -154,15 +191,19 @@
             <i class="bi bi-bar-chart"></i> All Reports
         </a>
 
- @if(Auth::user()->role == 'admin')
-<div class="nav-section">Admin</div>
-<a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
-    <i class="bi bi-shield-check"></i> Roles
-</a>
-<a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-    <i class="bi bi-person-gear"></i> Users
-</a>
-@endif
+        @if(Auth::user()->role == 'admin')
+        <div class="nav-section">Admin</div>
+        <a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+            <i class="bi bi-shield-check"></i> Roles
+        </a>
+        <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+            <i class="bi bi-person-gear"></i> Users
+        </a>
+        <a href="{{ route('settings.company.edit') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+            <i class="bi bi-gear"></i> Company Settings
+        </a>
+        @endif
+
     </nav>
 </div>
 
@@ -254,6 +295,5 @@
         }
     });
 </script>
-@yield('scripts')
-</body>
+@stack('scripts')</body>
 </html>

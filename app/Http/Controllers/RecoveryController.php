@@ -30,10 +30,15 @@ class RecoveryController extends Controller
         return view('recoveries.pending', compact('customers'));
     }
 
-    public function create(Sale $sale)
+    public function create(Request $request)
     {
-        $sale->load('customer');
-        return view('recoveries.create', compact('sale'));
+        $sale = null;
+        if ($request->sale_id) {
+            $sale = Sale::with('customer')->findOrFail($request->sale_id);
+        }
+        $customers    = Customer::orderBy('name')->get();
+        $unpaid_sales = Sale::where('status', '!=', 'paid')->with('customer')->latest()->get();
+        return view('recoveries.create', compact('sale', 'customers', 'unpaid_sales'));
     }
 
     public function store(Request $request)
@@ -76,5 +81,27 @@ class RecoveryController extends Controller
         });
 
         return redirect()->route('recoveries.pending')->with('success', 'Payment recorded successfully!');
+    }
+
+    public function destroy(Recovery $recovery)
+    {
+        DB::transaction(function () use ($recovery) {
+            $sale = Sale::findOrFail($recovery->sale_id);
+
+            $new_paid = $sale->paid_amount - $recovery->amount;
+            $new_due  = $sale->due_amount  + $recovery->amount;
+
+            $sale->update([
+                'paid_amount' => max(0, $new_paid),
+                'due_amount'  => $new_due,
+                'status'      => $new_due <= 0 ? 'paid' : ($new_paid > 0 ? 'partial' : 'unpaid'),
+            ]);
+
+            Customer::find($recovery->customer_id)?->increment('balance', $recovery->amount);
+
+            $recovery->delete();
+        });
+
+        return back()->with('success', 'Payment deleted and balances restored.');
     }
 }
