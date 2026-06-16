@@ -38,6 +38,8 @@
             color: #00b4d8;
         }
         .sidebar .nav-link i { width: 20px; margin-right: 8px; }
+        .sidebar nav { padding-bottom: 60px; }
+
         .sidebar .nav-section {
             color: rgba(255,255,255,0.3);
             font-size: 10px;

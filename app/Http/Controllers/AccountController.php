@@ -64,26 +64,114 @@ class AccountController extends Controller
                          ->with('success', 'Account deleted.');
     }
 
-
-
     public function trialBalance()
-{
-    $accounts = Account::with('journalLines')->get()->map(function ($account) {
-        $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
-        $credit = $account->journalLines->where('type', 'credit')->sum('amount');
-        return [
-            'code'    => $account->code,
-            'name'    => $account->name,
-            'type'    => $account->type,
-            'debit'   => $debit,
-            'credit'  => $credit,
-            'balance' => $debit - $credit,
-        ];
-    })->sortBy('code')->values();
+    {
+        $accounts = Account::with('journalLines')->get()->map(function ($account) {
+            $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
+            $credit = $account->journalLines->where('type', 'credit')->sum('amount');
+            return [
+                'code'    => $account->code,
+                'name'    => $account->name,
+                'type'    => $account->type,
+                'debit'   => $debit,
+                'credit'  => $credit,
+                'balance' => $debit - $credit,
+            ];
+        })->sortBy('code')->values();
 
-    $totalDebit  = $accounts->sum('debit');
-    $totalCredit = $accounts->sum('credit');
+        $totalDebit  = $accounts->sum('debit');
+        $totalCredit = $accounts->sum('credit');
 
-    return view('accounts.trial_balance', compact('accounts', 'totalDebit', 'totalCredit'));
-}
+        return view('accounts.trial_balance', compact('accounts', 'totalDebit', 'totalCredit'));
+    }
+
+    public function balanceSheet()
+    {
+        $accounts = Account::with('journalLines')->get();
+        $asOfDate = now()->format('d M Y');
+
+        $assets = $accounts->where('type', 'asset')->map(function ($account) {
+            $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
+            $credit = $account->journalLines->where('type', 'credit')->sum('amount');
+            return [
+                'name'    => $account->name,
+                'code'    => $account->code,
+                'balance' => $debit - $credit,
+            ];
+        })->values();
+
+        $liabilities = $accounts->where('type', 'liability')->map(function ($account) {
+            $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
+            $credit = $account->journalLines->where('type', 'credit')->sum('amount');
+            return [
+                'name'    => $account->name,
+                'code'    => $account->code,
+                'balance' => $credit - $debit,
+            ];
+        })->values();
+
+        $equity = $accounts->where('type', 'equity')->map(function ($account) {
+            $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
+            $credit = $account->journalLines->where('type', 'credit')->sum('amount');
+            return [
+                'name'    => $account->name,
+                'code'    => $account->code,
+                'balance' => $credit - $debit,
+            ];
+        })->values();
+
+        $revenue = $accounts->where('type', 'revenue')->sum(function ($account) {
+            return $account->journalLines->where('type', 'credit')->sum('amount')
+                 - $account->journalLines->where('type', 'debit')->sum('amount');
+        });
+
+        $expense = $accounts->where('type', 'expense')->sum(function ($account) {
+            return $account->journalLines->where('type', 'debit')->sum('amount')
+                 - $account->journalLines->where('type', 'credit')->sum('amount');
+        });
+
+        $netProfit = $revenue - $expense;
+
+        $totalAssets      = $assets->sum('balance');
+        $totalLiabilities = $liabilities->sum('balance');
+        $totalEquity      = $equity->sum('balance') + $netProfit;
+
+        return view('accounts.balance_sheet', compact(
+            'assets', 'liabilities', 'equity', 'netProfit',
+            'totalAssets', 'totalLiabilities', 'totalEquity', 'asOfDate'
+        ));
+    }
+
+    public function incomeStatement()
+    {
+        $accounts = Account::with('journalLines')->get();
+
+        $revenues = $accounts->where('type', 'revenue')->map(function ($account) {
+            $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
+            $credit = $account->journalLines->where('type', 'credit')->sum('amount');
+            return [
+                'name'    => $account->name,
+                'code'    => $account->code,
+                'balance' => $credit - $debit,
+            ];
+        })->values();
+
+        $expenses = $accounts->where('type', 'expense')->map(function ($account) {
+            $debit  = $account->journalLines->where('type', 'debit')->sum('amount');
+            $credit = $account->journalLines->where('type', 'credit')->sum('amount');
+            return [
+                'name'    => $account->name,
+                'code'    => $account->code,
+                'balance' => $debit - $credit,
+            ];
+        })->values();
+
+        $totalRevenue  = $revenues->sum('balance');
+        $totalExpenses = $expenses->sum('balance');
+        $netIncome     = $totalRevenue - $totalExpenses;
+
+        return view('accounts.income_statement', compact(
+            'revenues', 'expenses', 'totalRevenue', 'totalExpenses', 'netIncome'
+        ));
+    }
 }
