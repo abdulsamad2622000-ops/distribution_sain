@@ -86,6 +86,12 @@
                                 <i class="bi bi-eye"></i>
                             </a>
                             @if($order->status === 'draft')
+<a href="{{ route('purchase-orders.edit', $order) }}"
+    class="btn btn-sm btn-outline-warning">
+    <i class="bi bi-pencil"></i>
+</a>
+@endif
+                            @if($order->status === 'draft')
                             <form action="{{ route('purchase-orders.destroy', $order) }}"
                                 method="POST" class="d-inline"
                                 onsubmit="return confirm('Delete this PO?')">

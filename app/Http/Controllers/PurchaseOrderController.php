@@ -117,4 +117,67 @@ class PurchaseOrderController extends Controller
         return redirect()->route('purchase-orders.index')
             ->with('success', 'Purchase Order deleted.');
     }
+
+
+    public function edit(PurchaseOrder $purchaseOrder)
+{
+    if ($purchaseOrder->status !== 'draft') {
+        return redirect()->route('purchase-orders.show', $purchaseOrder)
+            ->with('error', 'Only draft orders can be edited.');
+    }
+
+    $suppliers = Supplier::orderBy('name')->get();
+    $products  = Product::orderBy('name')->get();
+    $purchaseOrder->load('items.product');
+    return view('purchase_orders.edit', compact('purchaseOrder', 'suppliers', 'products'));
+}
+
+public function update(Request $request, PurchaseOrder $purchaseOrder)
+{
+    if ($purchaseOrder->status !== 'draft') {
+        return redirect()->route('purchase-orders.show', $purchaseOrder)
+            ->with('error', 'Only draft orders can be edited.');
+    }
+
+    $request->validate([
+        'supplier_id'          => 'required|exists:suppliers,id',
+        'order_date'           => 'required|date',
+        'items'                => 'required|array|min:1',
+        'items.*.product_id'   => 'required|exists:products,id',
+        'items.*.qty'          => 'required|numeric|min:1',
+        'items.*.unit_price'   => 'required|numeric|min:0',
+    ]);
+
+    DB::transaction(function () use ($request, $purchaseOrder) {
+        $purchaseOrder->items()->delete();
+
+        $total      = 0;
+        $items_data = [];
+
+        foreach ($request->items as $item) {
+            $line_total   = $item['qty'] * $item['unit_price'];
+            $total       += $line_total;
+            $items_data[] = [
+                'product_id'   => $item['product_id'],
+                'qty'          => $item['qty'],
+                'unit_price'   => $item['unit_price'],
+                'total_price'  => $line_total,
+                'received_qty' => 0,
+            ];
+        }
+
+        $purchaseOrder->update([
+            'supplier_id'   => $request->supplier_id,
+            'order_date'    => $request->order_date,
+            'expected_date' => $request->expected_date,
+            'total_amount'  => $total,
+            'notes'         => $request->notes,
+        ]);
+
+        $purchaseOrder->items()->createMany($items_data);
+    });
+
+    return redirect()->route('purchase-orders.show', $purchaseOrder)
+        ->with('success', 'Purchase Order updated successfully!');
+}
 }

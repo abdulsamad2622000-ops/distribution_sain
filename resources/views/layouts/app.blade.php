@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-       .sidebar {
+        .sidebar {
             width: 250px;
             height: 100vh;
             background: linear-gradient(180deg, #0d1b2a 0%, #1b2838 50%, #0d1b2a 100%);
@@ -39,7 +39,6 @@
         }
         .sidebar .nav-link i { width: 20px; margin-right: 8px; }
         .sidebar nav { padding-bottom: 60px; }
-
         .sidebar .nav-section {
             color: rgba(255,255,255,0.3);
             font-size: 10px;
@@ -132,13 +131,15 @@
         <a href="{{ route('recoveries.index') }}" class="nav-link {{ request()->routeIs('recoveries.*') ? 'active' : '' }}">
             <i class="bi bi-cash-coin"></i> Recovery
         </a>
-<div class="nav-section">Purchase</div>
-<a href="{{ route('purchase-orders.index') }}" class="nav-link {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
-    <i class="bi bi-cart-plus"></i> Purchase Orders
-</a>
-<a href="{{ route('grns.index') }}" class="nav-link {{ request()->routeIs('grns.*') ? 'active' : '' }}">
-    <i class="bi bi-box-arrow-in-down"></i> Goods Received
-</a>
+
+        <div class="nav-section">Purchase</div>
+        <a href="{{ route('purchase-orders.index') }}" class="nav-link {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
+            <i class="bi bi-cart-plus"></i> Purchase Orders
+        </a>
+        <a href="{{ route('grns.index') }}" class="nav-link {{ request()->routeIs('grns.*') ? 'active' : '' }}">
+            <i class="bi bi-box-arrow-in-down"></i> Goods Received
+        </a>
+
         <div class="nav-section">Inventory</div>
         <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
             <i class="bi bi-box-seam"></i> Products
@@ -147,13 +148,14 @@
             <i class="bi bi-truck"></i> Suppliers
         </a>
         <a href="{{ route('warehouses.index') }}" class="nav-link {{ request()->routeIs('warehouses.*') ? 'active' : '' }}">
-    <i class="bi bi-building"></i> Warehouses
-</a>
-<div class="nav-section">Accounting</div>
-        <a href="{{ route('accounts.index') }}" class="nav-link {{ request()->routeIs('accounts.*') ? 'active' : '' }}">
+            <i class="bi bi-building"></i> Warehouses
+        </a>
+
+        <div class="nav-section">Accounting</div>
+        <a href="{{ route('accounts.index') }}" class="nav-link {{ request()->routeIs('accounts.index') || request()->routeIs('accounts.create') || request()->routeIs('accounts.edit') || request()->routeIs('accounts.show') ? 'active' : '' }}">
             <i class="bi bi-journal-bookmarks"></i> Chart of Accounts
         </a>
-       <a href="{{ route('journal-entries.index') }}" class="nav-link {{ request()->routeIs('journal-entries.*') ? 'active' : '' }}">
+        <a href="{{ route('journal-entries.index') }}" class="nav-link {{ request()->routeIs('journal-entries.*') ? 'active' : '' }}">
             <i class="bi bi-journal-text"></i> Journal Entries
         </a>
         <a href="{{ route('accounts.trial-balance') }}" class="nav-link {{ request()->routeIs('accounts.trial-balance') ? 'active' : '' }}">
@@ -165,6 +167,7 @@
         <a href="{{ route('accounts.income-statement') }}" class="nav-link {{ request()->routeIs('accounts.income-statement') ? 'active' : '' }}">
             <i class="bi bi-graph-up-arrow"></i> Income Statement
         </a>
+
         <div class="nav-section">HR & Payroll</div>
         <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
             <i class="bi bi-people-fill"></i> Employees
@@ -175,6 +178,7 @@
         <a href="{{ route('attendance.index') }}" class="nav-link {{ request()->routeIs('attendance.*') ? 'active' : '' }}">
             <i class="bi bi-calendar-check"></i> Attendance
         </a>
+
         <div class="nav-section">Parties</div>
         <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
             <i class="bi bi-people"></i> Customers
@@ -283,10 +287,21 @@
         sidebar.classList.contains('hidden') ? openSidebar() : closeSidebar();
     }
 
-    window.addEventListener('load', function() {
-        if (window.innerWidth < 992) closeSidebar();
-    });
+   window.addEventListener('load', function() {
+    if (window.innerWidth < 992) {
+        closeSidebar();
+    }
+    // Restore sidebar scroll position
+    const savedScroll = sessionStorage.getItem('sidebarScroll');
+    if (savedScroll) {
+        sidebar.scrollTop = parseInt(savedScroll);
+    }
+});
 
+// Save sidebar scroll position before page unload
+sidebar.addEventListener('scroll', function() {
+    sessionStorage.setItem('sidebarScroll', sidebar.scrollTop);
+});
     window.addEventListener('resize', function() {
         if (window.innerWidth >= 992) {
             openSidebar();
@@ -297,5 +312,7 @@
         }
     });
 </script>
-@stack('scripts')</body>
+@stack('scripts')
+@yield('scripts')
+</body>
 </html>

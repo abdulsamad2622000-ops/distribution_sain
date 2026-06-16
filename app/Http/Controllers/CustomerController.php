@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Models\{Customer, Recovery};
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CustomerController extends Controller
 {
@@ -14,7 +13,11 @@ class CustomerController extends Controller
             ->when($request->outstanding, fn($q) => $q->where('balance', '>', 0))
             ->paginate(20);
 
-        return view('customers.index', compact('customers'));
+        $totalCustomers    = Customer::count();
+        $totalReceivable   = Customer::sum('balance');
+        $customersWithDues = Customer::where('balance', '>', 0)->count();
+
+        return view('customers.index', compact('customers', 'totalCustomers', 'totalReceivable', 'customersWithDues'));
     }
 
     public function create()
@@ -29,7 +32,14 @@ class CustomerController extends Controller
             'phone' => 'nullable|string|max:20',
         ]);
 
-        Customer::create($request->all());
+        Customer::create([
+            'name'    => $request->name,
+            'phone'   => $request->phone,
+            'address' => $request->address,
+            'area'    => $request->area,
+            'balance' => $request->balance ?? 0,
+        ]);
+
         return redirect()->route('customers.index')->with('success', 'Customer added!');
     }
 
@@ -52,7 +62,14 @@ class CustomerController extends Controller
             'phone' => 'nullable|string|max:20',
         ]);
 
-        $customer->update($request->only('name', 'phone', 'address', 'area'));
+        $customer->update([
+            'name'    => $request->name,
+            'phone'   => $request->phone,
+            'address' => $request->address,
+            'area'    => $request->area,
+            'balance' => $request->balance ?? $customer->balance,
+        ]);
+
         return redirect()->route('customers.show', $customer)->with('success', 'Customer updated!');
     }
 
@@ -64,39 +81,19 @@ class CustomerController extends Controller
 
     public function ledger(Customer $customer)
     {
-        $entries = collect();
+        $sales      = $customer->sales()->with('items.product')->latest()->get();
+        $recoveries = $customer->recoveries()->latest()->get();
+        return view('customers.ledger', compact('customer', 'sales', 'recoveries'));
+    }
 
-        $customer->sales()->get()->each(function ($sale) use (&$entries) {
-            $entries->push([
-                'date'        => $sale->sale_date,
-                'type'        => 'sale',
-                'description' => 'Invoice #' . $sale->invoice_no,
-                'debit'       => $sale->net_amount,
-                'credit'      => 0,
-                'ref_id'      => $sale->id,
-            ]);
-        });
+    public function ledgerPdf(Customer $customer)
+    {
+        $sales      = $customer->sales()->with('items.product')->latest()->get();
+        $recoveries = $customer->recoveries()->latest()->get();
 
-        $customer->recoveries()->get()->each(function ($rec) use (&$entries) {
-            $entries->push([
-                'date'        => $rec->payment_date,
-                'type'        => 'recovery',
-                'description' => 'Payment - ' . ucfirst($rec->payment_method),
-                'debit'       => 0,
-                'credit'      => $rec->amount,
-                'ref_id'      => $rec->id,
-            ]);
-        });
+        $pdf = Pdf::loadView('customers.ledger_pdf', compact('customer', 'sales', 'recoveries'))
+            ->setPaper('a4', 'portrait');
 
-        $entries = $entries->sortBy('date')->values();
-
-        $balance = 0;
-        $entries = $entries->map(function ($entry) use (&$balance) {
-            $balance += $entry['debit'] - $entry['credit'];
-            $entry['balance'] = $balance;
-            return $entry;
-        });
-
-        return view('customers.ledger', compact('customer', 'entries'));
+        return $pdf->download('ledger-' . $customer->name . '.pdf');
     }
 }

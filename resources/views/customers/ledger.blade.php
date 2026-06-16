@@ -1,4 +1,3 @@
- 
 @extends('layouts.app')
 
 @section('title', 'Customer Ledger')
@@ -18,19 +17,37 @@
                     <tr><td class="text-muted">Phone</td><td>{{ $customer->phone ?? 'N/A' }}</td></tr>
                     <tr><td class="text-muted">Area</td><td>{{ $customer->area ?? 'N/A' }}</td></tr>
                     <tr><td class="text-muted">Address</td><td>{{ $customer->address ?? 'N/A' }}</td></tr>
-                    <tr><td class="text-muted">Total Sales</td><td>PKR {{ number_format($customer->totalSales()) }}</td></tr>
-                    <tr><td class="text-muted">Total Recovered</td><td class="text-success">PKR {{ number_format($customer->totalRecovered()) }}</td></tr>
-                    <tr><td class="text-muted">Outstanding</td><td class="text-danger fw-bold">PKR {{ number_format($customer->outstanding()) }}</td></tr>
+                    <tr>
+                        <td class="text-muted">Total Sales</td>
+                        <td>PKR {{ number_format($sales->sum('net_amount')) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Total Recovered</td>
+                        <td class="text-success">PKR {{ number_format($recoveries->sum('amount')) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Outstanding</td>
+                        <td class="text-danger fw-bold">PKR {{ number_format($customer->balance) }}</td>
+                    </tr>
                 </table>
-                <a href="{{ route('recoveries.create') }}?customer_id={{ $customer->id }}" class="btn btn-success w-100 mt-2">
+                <a href="{{ route('recoveries.create') }}?customer_id={{ $customer->id }}"
+                    class="btn btn-success w-100 mt-2">
                     <i class="bi bi-cash-coin"></i> Record Payment
                 </a>
+                <div class="d-flex gap-2 mt-2">
+    <a href="{{ route('customers.ledger.pdf', $customer) }}"
+        class="btn btn-danger w-50" target="_blank">
+        <i class="bi bi-file-pdf"></i> PDF
+    </a>
+    <button onclick="window.print()" class="btn btn-secondary w-50">
+        <i class="bi bi-printer"></i> Print
+    </button>
+</div>
             </div>
         </div>
     </div>
 
     <div class="col-md-8">
-        <!-- Sales -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-receipt me-2"></i>Invoices</div>
             <div class="card-body p-0">
@@ -70,10 +87,10 @@
                         </tbody>
                     </table>
                 </div>
+
             </div>
         </div>
 
-        <!-- Recoveries -->
         <div class="card">
             <div class="card-header"><i class="bi bi-cash-coin me-2"></i>Payment History</div>
             <div class="card-body p-0">
@@ -101,6 +118,7 @@
                         </tbody>
                     </table>
                 </div>
+               
             </div>
         </div>
     </div>

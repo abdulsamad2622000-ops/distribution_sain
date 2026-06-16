@@ -29,22 +29,33 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Products
     Route::resource('products', ProductController::class);
-    Route::resource('suppliers', SupplierController::class);
-    Route::resource('customers', CustomerController::class);
-    Route::get('/customers/{customer}/ledger', [CustomerController::class, 'ledger'])->name('customers.ledger');
 
+    // Suppliers
+    Route::resource('suppliers', SupplierController::class);
+
+    // Customers
+    Route::resource('customers', CustomerController::class);
+    Route::get('/customers/{customer}/ledger',     [CustomerController::class, 'ledger'])->name('customers.ledger');
+    Route::get('/customers/{customer}/ledger/pdf', [CustomerController::class, 'ledgerPdf'])->name('customers.ledger.pdf');
+    Route::get('/customers/list/pdf',              [CustomerController::class, 'listPdf'])->name('customers.index.pdf');
+
+    // Sales
     Route::resource('sales', SaleController::class);
     Route::get('/sales/{sale}/print', [SaleController::class, 'invoice'])->name('sales.print');
 
+    // Recoveries
     Route::get('/recoveries',               [RecoveryController::class, 'index'])->name('recoveries.index');
     Route::get('/recoveries/pending',       [RecoveryController::class, 'pending'])->name('recoveries.pending');
     Route::get('/recoveries/create',        [RecoveryController::class, 'create'])->name('recoveries.create');
     Route::post('/recoveries',              [RecoveryController::class, 'store'])->name('recoveries.store');
     Route::delete('/recoveries/{recovery}', [RecoveryController::class, 'destroy'])->name('recoveries.destroy');
 
+    // Expenses
     Route::resource('expenses', ExpenseController::class);
 
+    // Reports
     Route::get('/reports',                     [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/sales',               [ReportController::class, 'sales'])->name('reports.sales');
     Route::get('/reports/recovery',            [ReportController::class, 'recovery'])->name('reports.recovery');
@@ -61,6 +72,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/purchase-orders/create',                   [PurchaseOrderController::class, 'create'])->name('purchase-orders.create');
     Route::post('/purchase-orders',                         [PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
     Route::get('/purchase-orders/{purchaseOrder}',          [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    Route::get('/purchase-orders/{purchaseOrder}/edit',     [PurchaseOrderController::class, 'edit'])->name('purchase-orders.edit');
+    Route::put('/purchase-orders/{purchaseOrder}',          [PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
     Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
     Route::post('/purchase-orders/{purchaseOrder}/cancel',  [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
     Route::delete('/purchase-orders/{purchaseOrder}',       [PurchaseOrderController::class, 'destroy'])->name('purchase-orders.destroy');
@@ -75,16 +88,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('warehouses', WarehouseController::class);
     Route::post('/warehouses/{warehouse}/adjust', [WarehouseController::class, 'adjust'])->name('warehouses.adjust');
 
-    // Accounting Module
+    // Accounting
     Route::resource('accounts', AccountController::class);
-    Route::resource('journal-entries', JournalEntryController::class);
     Route::get('/trial-balance',    [AccountController::class, 'trialBalance'])->name('accounts.trial-balance');
     Route::get('/balance-sheet',    [AccountController::class, 'balanceSheet'])->name('accounts.balance-sheet');
     Route::get('/income-statement', [AccountController::class, 'incomeStatement'])->name('accounts.income-statement');
+    Route::resource('journal-entries', JournalEntryController::class);
 
-    // HR & Payroll Module
+    // HR & Payroll
     Route::resource('employees', EmployeeController::class);
-    Route::resource('salaries', SalaryController::class)->except(['edit', 'update']);
+    Route::resource('salaries', SalaryController::class);
     Route::post('/salaries/{salary}/mark-paid', [SalaryController::class, 'markPaid'])->name('salaries.mark-paid');
     Route::get('/attendance',        [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance',       [AttendanceController::class, 'store'])->name('attendance.store');
