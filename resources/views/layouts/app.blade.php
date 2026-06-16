@@ -180,6 +180,16 @@
         </a>
 
         <div class="nav-section">Parties</div>
+        <div class="nav-section">CRM</div>
+       <a href="{{ route('leads.index') }}" class="nav-link {{ request()->routeIs('leads.index', 'leads.create', 'leads.edit', 'leads.show') ? 'active' : '' }}">
+            <i class="bi bi-funnel"></i> Leads
+        </a>
+        <a href="{{ route('leads.pipeline') }}" class="nav-link {{ request()->is('crm/pipeline') ? 'active' : '' }}">
+            <i class="bi bi-kanban"></i> Pipeline
+        </a>
+        <a href="{{ route('followups.index') }}" class="nav-link {{ request()->routeIs('followups.*') ? 'active' : '' }}">
+            <i class="bi bi-clock"></i> Follow-ups
+        </a>
         <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
             <i class="bi bi-people"></i> Customers
         </a>

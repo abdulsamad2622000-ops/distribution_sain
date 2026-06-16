@@ -20,6 +20,9 @@ use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\FollowupController;
+use App\Http\Controllers\InteractionController;
 
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -102,6 +105,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance',        [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance',       [AttendanceController::class, 'store'])->name('attendance.store');
     Route::get('/attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
+
+    // CRM Module
+    Route::resource('leads', LeadController::class);
+    Route::get('/crm/pipeline', [LeadController::class, 'pipeline'])->name('leads.pipeline');
+    Route::get('/followups',                        [FollowupController::class, 'index'])->name('followups.index');
+    Route::post('/followups',                       [FollowupController::class, 'store'])->name('followups.store');
+    Route::post('/followups/{followup}/mark-done',  [FollowupController::class, 'markDone'])->name('followups.mark-done');
+    Route::delete('/followups/{followup}',          [FollowupController::class, 'destroy'])->name('followups.destroy');
+    Route::post('/interactions',                    [InteractionController::class, 'store'])->name('interactions.store');
+    Route::delete('/interactions/{interaction}',    [InteractionController::class, 'destroy'])->name('interactions.destroy');
 
     Route::middleware(['role:admin'])->group(function () {
         Route::resource('roles', RoleController::class);
