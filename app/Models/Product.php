@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToCompany;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToCompany;
 
     protected $fillable = [
-        'name', 'sku', 'unit', 'purchase_price',
+        'company_id', 'name', 'sku', 'unit', 'purchase_price',
         'selling_price', 'stock_qty', 'low_stock_alert', 'supplier_id'
     ];
 

@@ -11,13 +11,17 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('roleModel')->latest()->get();
+        // Users are scoped manually (User model has no global scope to keep auth safe).
+        $users = User::with('roleModel')
+            ->where('company_id', auth()->user()->company_id)
+            ->latest()->get();
+
         return view('users.index', compact('users'));
     }
 
     public function create()
     {
-        $roles = Role::latest()->get();
+        $roles = Role::latest()->get(); // Role is auto-scoped to this company
         return view('users.create', compact('roles'));
     }
 
@@ -31,11 +35,12 @@ class UserController extends Controller
         ]);
 
         User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'role'     => $request->role,
-            'role_id'  => $request->role_id ?? null,
+            'company_id' => auth()->user()->company_id,   // tie new staff to this company
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'role'       => $request->role,
+            'role_id'    => $request->role_id ?? null,
         ]);
 
         return redirect()->route('users.index')->with('success', 'User added!');
@@ -43,12 +48,15 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        abort_unless($user->company_id === auth()->user()->company_id, 403);
         $roles = Role::latest()->get();
         return view('users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
     {
+        abort_unless($user->company_id === auth()->user()->company_id, 403);
+
         $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -73,6 +81,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        abort_unless($user->company_id === auth()->user()->company_id, 403);
+
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Cannot delete yourself!');
         }

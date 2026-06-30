@@ -125,3 +125,20 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
+
+use App\Http\Controllers\SuperAdmin\DashboardController as SaDashboard;
+use App\Http\Controllers\SuperAdmin\CompanyController;
+use App\Http\Controllers\SuperAdmin\PlanController;
+
+Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+    Route::get('/dashboard', [SaDashboard::class, 'index'])->name('dashboard');
+
+    Route::resource('companies', CompanyController::class)->except(['show']);
+    Route::patch('companies/{company}/toggle', [CompanyController::class, 'toggleStatus'])->name('companies.toggle');
+
+    Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+    Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+    Route::patch('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+    Route::patch('/plans/{plan}/toggle', [PlanController::class, 'toggleStatus'])->name('plans.toggle');
+    Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])->name('plans.destroy');
+});

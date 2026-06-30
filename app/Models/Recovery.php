@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToCompany;
 
 class Recovery extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $fillable = [
-        'sale_id', 'customer_id', 'user_id', 'amount',
+        'company_id', 'sale_id', 'customer_id', 'user_id', 'amount',
         'payment_method', 'reference_no', 'payment_date', 'notes'
     ];
 

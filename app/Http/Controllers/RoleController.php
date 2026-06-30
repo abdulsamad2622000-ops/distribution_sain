@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
     public function index()
     {
+        // Role uses BelongsToCompany -> auto-scoped to current company.
         $roles = Role::withCount('users')->with('permissions')->latest()->get();
         return view('roles.index', compact('roles'));
     }
@@ -24,9 +26,14 @@ class RoleController extends Controller
     {
         $request->validate([
             'display_name' => 'required|string|max:255',
-            'name'         => 'required|string|max:255|unique:roles,name',
+            'name'         => [
+                'required', 'string', 'max:255',
+                // unique within THIS company only
+                Rule::unique('roles', 'name')->where('company_id', auth()->user()->company_id),
+            ],
         ]);
 
+        // company_id is stamped automatically by the BelongsToCompany trait
         $role = Role::create([
             'name'         => strtolower(str_replace(' ', '_', $request->name)),
             'display_name' => $request->display_name,
@@ -42,8 +49,8 @@ class RoleController extends Controller
 
     public function edit(Role $role)
     {
-        $permissions        = Permission::orderBy('module')->orderBy('action')->get()->groupBy('module');
-        $rolePermissions    = $role->permissions->pluck('id')->toArray();
+        $permissions     = Permission::orderBy('module')->orderBy('action')->get()->groupBy('module');
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
         return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
     }
 

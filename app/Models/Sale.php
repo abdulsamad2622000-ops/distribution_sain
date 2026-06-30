@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToCompany;
 
 class Sale extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToCompany;
 
     protected $fillable = [
-        'invoice_no', 'customer_id', 'user_id', 'total_amount',
+        'company_id', 'invoice_no', 'customer_id', 'user_id', 'total_amount',
         'discount', 'net_amount', 'paid_amount', 'due_amount',
         'payment_type', 'status', 'sale_date', 'notes'
     ];
@@ -30,10 +31,16 @@ class Sale extends Model
         );
     }
 
-    public static function generateInvoiceNo()
-    {
-        $last = static::withTrashed()->latest()->first();
-        $number = $last ? ((int) substr($last->invoice_no, 4)) + 1 : 1;
-        return 'INV-' . str_pad($number, 5, '0', STR_PAD_LEFT);
+   public static function generateInvoiceNo()
+{
+    $prefix = CompanySetting::get()->invoice_prefix ?: 'INV';
+    $prefix = rtrim($prefix, '-') . '-';
+
+    $last = static::withTrashed()->latest('id')->first();
+    $number = 1;
+    if ($last && preg_match('/(\d+)$/', $last->invoice_no, $m)) {
+        $number = (int) $m[1] + 1;
     }
+    return $prefix . str_pad($number, 5, '0', STR_PAD_LEFT);
+}
 }

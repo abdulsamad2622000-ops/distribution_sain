@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToCompany;
 
 class CompanySetting extends Model
 {
+    use BelongsToCompany;
+
     protected $fillable = [
+        'company_id',
         'company_name',
         'company_tagline',
         'company_email',
@@ -24,14 +28,23 @@ class CompanySetting extends Model
         'logo_path',
     ];
 
-    // Hamesha ek hi row rehti hai id=1
+    /**
+     * Returns the settings row for the CURRENTLY logged-in company.
+     * Har company ka apna ek row — pehli baar access par auto-ban jata hai.
+     */
     public static function get(): self
     {
-        return self::firstOrCreate(['id' => 1], [
-            'company_name'    => 'My Company',
-            'currency_symbol' => 'PKR',
-            'currency_code'   => 'PKR',
-            'invoice_prefix'  => 'INV',
-        ]);
+        $companyId = auth()->user()->company_id;
+
+        return static::firstOrCreate(
+            ['company_id' => $companyId],
+            [
+                'company_name'    => auth()->user()->company->name ?? 'My Company',
+                'company_email'   => auth()->user()->company->email ?? null,
+                'currency_symbol' => 'PKR',
+                'currency_code'   => 'PKR',
+                'invoice_prefix'  => 'INV',
+            ]
+        );
     }
 }

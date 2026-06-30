@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToCompany;
 
 class SaleItem extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $fillable = [
-        'sale_id', 'product_id', 'qty',
+        'company_id', 'sale_id', 'product_id', 'qty',
         'unit_price', 'purchase_price', 'total_price'
     ];
 
