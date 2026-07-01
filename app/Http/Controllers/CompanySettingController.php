@@ -29,7 +29,8 @@ class CompanySettingController extends Controller
 
         $settings = CompanySetting::get();
 
-        $data = $request->except(['_token', '_method', 'logo']);
+        // company_id / id ko kabhi overwrite na hone do (security)
+        $data = $request->except(['_token', '_method', 'logo', 'company_id', 'id']);
 
         if ($request->hasFile('logo')) {
             if ($settings->logo_path) {
@@ -39,6 +40,7 @@ class CompanySettingController extends Controller
         }
 
         $settings->update($data);
+        $data['tax_percentage'] = $request->tax_percentage ?? 0;
 
         return redirect()->route('settings.company.edit')
             ->with('success', 'Company settings saved successfully!');

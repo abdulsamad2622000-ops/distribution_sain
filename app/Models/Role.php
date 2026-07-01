@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\BelongsToCompany;
 
 class Role extends Model
 {
-    protected $fillable = ['name', 'display_name', 'description'];
+    use BelongsToCompany;
+
+    protected $fillable = ['company_id', 'name', 'display_name', 'description'];
 
     public function permissions()
     {

@@ -12,6 +12,9 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        if (auth()->user()->is_super_admin) {
+            return redirect()->route('superadmin.dashboard');
+        }
         $from = now()->startOfMonth()->format('Y-m-d');
         $to   = now()->format('Y-m-d');
 

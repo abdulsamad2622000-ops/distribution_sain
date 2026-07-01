@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\BelongsToCompany;
 
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToCompany;
 
-    protected $fillable = ['name', 'phone', 'address', 'area', 'balance'];
+    protected $fillable = ['company_id', 'name', 'phone', 'address', 'area', 'balance'];
 
     public function sales()      { return $this->hasMany(Sale::class); }
     public function recoveries() { return $this->hasMany(Recovery::class); }
